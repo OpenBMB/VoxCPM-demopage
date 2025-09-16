@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta name="generator" content="Hugo 0.123.7">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,700" rel="stylesheet" type="text/css">
+
+	<link rel="stylesheet" href="./css/custom.css">
+	<link rel="stylesheet" href="./css/normalize.css">
+	<title>VoxCPM: Tokenizer-Free TTS for Context-Aware Speech Generation and True-to-Life Voice Cloning</title>
+	<link href="./css/bootstrap.min.css" rel="stylesheet">
+	
+    <style>
+		.image-container{display:flex;justify-content:center;align-items:center;margin-bottom:5px}.image-container img{margin-right:0px;}.image-container img:last-child{margin-right:0}.caption{text-align:center;font-size:16px}
+	</style>
+</head>
+
+
+<body data-new-gr-c-s-check-loaded="14.1091.0" data-gr-ext-installed="">
+<div class="container" >
+<main role="main">
+<article itemscope itemtype="https://schema.org/BlogPosting">
+
+
+<div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">
+	<div class="image-container">
+		<div>
+			<img src="./pics/voxcpm.png" alt="" height="600" width="600">
+			<p class="caption"></p>
+		</div>
+	</div>
+	<div class="text-center">
+		<h1>VoxCPM: Tokenizer-Free TTS for Context-Aware Speech Generation and True-to-Life Voice Cloning</h1>
+		<p class="fst-italic mb-0"><br>VoxCPM Team</p>
+		<p><b>ModelBest｜THUHCSI｜OpenBMB</b></p>
+		<div class="image-container">
+			<div>
+				<img src="./pics/mb.png" alt="" height="600" width="600">
+				<p class="caption"></p>
+			</div>
+			<div>
+				<img src="./pics/hcsi.png" alt="" height="600" width="600">
+				<p class="caption"></p>
+			</div>
+			<div>
+				<img src="./pics/bmb.png" alt="" height="600" width="600">
+				<p class="caption"></p>
+			</div>
+		
+		</div>
+		<a href="https://github.com/OpenBMB/VoxCPM/"><img src="https://img.shields.io/badge/Project%20Page-GitHub-blue"></a>
+		<a href="https://huggingface.co/openbmb/VoxCPM-0.5B"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-OpenBMB-yellow"></a>
+		<a href="https://modelscope.cn/models/OpenBMB/VoxCPM-0.5B"><img src="https://img.shields.io/badge/ModelScope-OpenBMB-purple"></a>
+		<a href="https://huggingface.co/spaces/OpenBMB/VoxCPM-Demo"><img src="https://img.shields.io/badge/Live%20PlayGround-Demo-orange"></a>
+	</div>
+	
+	
+	<p><b>Abstract:</b> We present VoxCPM, an end-to-end speech generation model based on diffusion autoregressive modeling. Built upon the efficient large language model MiniCPM-4, VoxCPM extends its capabilities to speech synthesis by combining hierarchical language modeling, finite scalar quantization (FSQ), and local Diffusion Transformers (DiT) to overcome the information loss of token methods while improving the stability of continuous autoregressive representations. Leveraging the structured semi-discrete representations produced by FSQ, the model implicitly disentangles high-level semantics from fine-grained acoustic features, enabling more natural, faithful, and prosodically expressive speech. Trained on over 1.8 million hours of bilingual Chinese–English corpus, VoxCPM-0.5B achieves state-of-the-art performance among open-source systems on multiple TTS benchmarks, with advanced context-aware speech generation and highly realistic zero-shot voice cloning capabilities. VoxCPM achieves an RTF of 0.17 on consumer GPUs, enabling efficient low-latency streaming and serving as a powerful foundation for true-to-life speech synthesis.
+</p>
+	<p><b>Key Features</b>
+		<ul>
+			
+				<li><b>Context-Aware, Expressive Speech Generation</b> - VoxCPM comprehends text to infer and generate appropriate prosody, delivering speech with remarkable expressiveness and natural flow. It spontaneously adapts speaking style based on content, producing highly fitting vocal expression trained on a massive 1.8 million-hour bilingual corpus.</li>
+			
+				<li><b>True-to-Life Voice Cloning</b> - With only a short reference audio clip, VoxCPM performs accurate zero-shot voice cloning, capturing not only the speaker’s timbre but also fine-grained characteristics such as accent, emotional tone, rhythm, and pacing to create a faithful and natural replica.</li>
+			
+				<li><b>High-Efficiency Synthesis</b> - VoxCPM supports streaming synthesis with a Real-Time Factor (RTF) as low as 0.17 on a consumer-grade NVIDIA RTX 4090 GPU, making it possible for real-time applications.</li>
+			
+		</ul>
+	</p>
+
+	<p>
+		<b>Contents</b>
+		<ul>
+			
+				<li><a href="#monolingual-cross-lingual-voice-cloning">Monolingual &amp; Cross-Lingual Voice Cloning</a></li>
+			
+				<li><a href="#emotional-voice-cloning">Emotional Voice Cloning</a></li>
+			
+				<li><a href="#dialect-accent-voice-cloning">Dialect &amp; Accent Voice Cloning</a></li>
+			
+				<li><a href="#voice-and-recording-condition-cloning">Voice and Recording Condition Cloning</a></li>
+			
+				<li><a href="#text-guided-speech-generation">Text-Guided Speech Generation</a></li>
+			
+				<li><a href="#mathematical-symbol-awareness">Mathematical Symbol Awareness</a></li>
+			
+				<li><a href="#phoneme-control-support">Phoneme Control Support</a></li>
+			
+		</ul>
+	</p>
+</div>
+
+
+
+
+
+
+
+<div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">
+	
+	<div class="text-center">
+		<h2 id="monolingual-cross-lingual-voice-cloning" style="text-align: center;">Monolingual &amp; Cross-Lingual Voice Cloning</h2>
+		 
+	</div>
+	
+	
+	<div class="table-responsive pt-3">
+		<table class="table table-hover pt-2">
+			<thead>
+				<tr>
+					<th style="vertical-align : middle;text-align: center">Language</th><th style="vertical-align : middle;text-align: center">Prompt</th><th style="vertical-align : middle;text-align: center">Text</th><th style="vertical-align : middle;text-align: center">VoxCPM</th><th style="vertical-align : middle;text-align: center">CosyVoice2</th><th style="vertical-align : middle;text-align: center">Index-TTS</th>
+				</tr>
+			</thead>
+			<tbody>
+			
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;" rowspan="2">EN -&gt; ZH</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/prompt/Ben_promptvn.wav"/></audio><br>So it may be that you would prefer to forego my secret rather than consent to becoming a prisoner here for what might be several days.</td>
+					<td style="vertical-align : middle;text-align:center;">今天天气很好，阳光温暖，我想出去散步放松一下。一路上微风轻拂，带来阵阵花草的清香。街道两旁的树叶在阳光下闪烁着光泽，显得格外生机勃勃。走在这样的环境里，心情也不由得轻松愉快起来。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/voxcpm/Ben_promptvn.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/cv2/Ben_promptvn.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/index-tts/Ben_promptvn.indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/prompt/common_voice_en_63703.wav"/></audio><br>They&#39;re calling to us not to give up and to keep on fighting.</td>
+					<td style="vertical-align : middle;text-align:center;">这个问题需要我们认真讨论，找到一个合适的解决方案。我们不仅要分析问题产生的根源，还要评估不同方案可能带来的影响。只有在充分权衡利弊之后，才能制定出最合理、最可行的应对措施。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/voxcpm/common_voice_en_63703.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/cv2/common_voice_en_63703.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/index-tts/common_voice_en_63703.indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;" rowspan="2">EN -&gt; EN</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/prompt/common_voice_en_188092.wav"/></audio><br>This man looked exactly the same, except that now the roles were reversed.</td>
+					<td style="vertical-align : middle;text-align:center;">He is always confident when presenting his ideas to the team, speaking with clarity and composure. His assured manner not only helps convey his points effectively but also inspires trust and engagement among his colleagues.</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/voxcpm/common_voice_en_188092.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/cv2/common_voice_en_188092.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/index-tts/common_voice_en_188092.indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/prompt/trump_promptvn.wav"/></audio><br>In short, we embarked on a mission to make America great again for all Americans.</td>
+					<td style="vertical-align : middle;text-align:center;">Learning a new language opens doors to different cultures and perspectives, allowing individuals to gain deeper insights into diverse traditions, values, and ways of thinking. It fosters cross-cultural understanding, enhances global communication, and broadens one’s intellectual horizons.</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/voxcpm/trump_promptvn.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/cv2/trump_promptvn.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/index-tts/trump_promptvn.indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;" rowspan="2">ZH -&gt; EN</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/prompt/00004509-00000108.wav"/></audio><br>梁永祥又如何与创业挑战面对面对决？</td>
+					<td style="vertical-align : middle;text-align:center;">The meeting was productive, and we outlined a clear plan for the next quarter. Each team member clearly understood their responsibilities, and deadlines were set to ensure timely progress. Additionally, we identified potential challenges and discussed strategies to address them proactively.</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/voxcpm/00004509-00000108.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/cv2/00004509-00000108.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/index-tts/00004509-00000108.indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/prompt/00004517-00000040.wav"/></audio><br>多云有阵雨，暴雷有大风。</td>
+					<td style="vertical-align : middle;text-align:center;">She smiled brightly, making everyone in the room feel comfortable and relaxed. Her warm expression seemed to dissolve any tension, encouraging others to speak openly and share their thoughts. The atmosphere quickly became friendly and welcoming, fostering a sense of camaraderie among the group.</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/voxcpm/00004517-00000040.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/cv2/00004517-00000040.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/index-tts/00004517-00000040.indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;" rowspan="2">ZH -&gt; ZH</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/prompt/dehua_promptvn.wav"/></audio><br>所以我觉得这些成功的电影他都很真诚，而且很有生命力。他就跟当年的那个0号的那个一模一样。</td>
+					<td style="vertical-align : middle;text-align:center;">昨天的派对真的很有趣，音乐和食物都很完美，大家在轻松的氛围中尽情交流与欢笑，让整个晚上都充满了欢乐与温暖。那一刻仿佛所有的压力都被抛在脑后，只留下无尽的快乐。这样的回忆会在心中久久停留，成为日后微笑的理由。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/voxcpm/dehua_promptvn.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/cv2/dehua_promptvn.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/index-tts/dehua_promptvn.indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/prompt/jialing_promptvn.wav"/></audio><br>跟观众分享我人生的感悟。因为我们都是只活一次，我们也都是第一次活，我们也不知道该怎么活着。</td>
+					<td style="vertical-align : middle;text-align:center;">这项研究展示了技术如何在日常生活中发挥作用，通过提供更便捷、更高效的方式促进人们之间的信息交流与情感传递，从而显著增强沟通的质量与效果。进一步而言，这种技术驱动的沟通模式为社会互动与人机协作的研究开辟了新的方向。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/voxcpm/jialing_promptvn.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/cv2/jialing_promptvn.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/zeroshot/index-tts/jialing_promptvn.indextts2.wav"/></audio></td>
+				</tr>
+				
+			
+			</tbody>
+		</table>
+	</div>
+</div>
+
+
+
+<div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">
+	
+	<div class="text-center">
+		<h2 id="emotional-voice-cloning" style="text-align: center;">Emotional Voice Cloning</h2>
+		 
+	</div>
+	
+	
+	<div class="table-responsive pt-3">
+		<table class="table table-hover pt-2">
+			<thead>
+				<tr>
+					<th style="vertical-align : middle;text-align: center">Emotion</th><th style="vertical-align : middle;text-align: center">Prompt</th><th style="vertical-align : middle;text-align: center">Text</th><th style="vertical-align : middle;text-align: center">VoxCPM</th><th style="vertical-align : middle;text-align: center">CosyVoice2</th><th style="vertical-align : middle;text-align: center">Index-TTS</th>
+				</tr>
+			</thead>
+			<tbody>
+			
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;" rowspan="2">Angry</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/angry_en_prompt.wav"/></audio><br>Enough,you a foolish chatter.</td>
+					<td style="vertical-align : middle;text-align:center;">Who the hell you think you are talking to?</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/angry_en_voxcpm.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/angry_en_cosyvoice2.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/angry_en_indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/angry_zh_prompt.wav"/></audio><br>我不会牺牲我的健康来换取金钱的。</td>
+					<td style="vertical-align : middle;text-align:center;">宁死不受嗟来之食！</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/angry_zh_voxcpm.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/angry_zh_cosyvoice2.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/angry_zh_indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;" rowspan="2">Happy</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/happy_en_prompt.wav"/></audio><br>Because he was a man with infinite resource and sagacity.</td>
+					<td style="vertical-align : middle;text-align:center;">He approached every challenge with an unshakeable optimism and a delighted twinkle in his eye!</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/happy_en_voxcpm.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/happy_en_cosyvoice2.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/happy_en_indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/happy_zh_prompt.wav"/></audio><br>我太喜欢听了，所以不断重复着听。</td>
+					<td style="vertical-align : middle;text-align:center;">每次听都像第一次听到时那样让我开心地手舞足蹈！</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/happy_zh_voxcpm.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/happy_zh_cosyvoice2.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/happy_zh_indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;" rowspan="2">Sad</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/sad_en_prompt.wav"/></audio><br>Give me your hand, or I will cry harder than before.</td>
+					<td style="vertical-align : middle;text-align:center;">And yet, you turned away, leaving my tears to fall alone.</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/sad_en_voxcpm.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/sad_en_cosyvoice2.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/sad_en_indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/sad_zh_prompt.wav"/></audio><br>如果她拒绝我，我会死的。</td>
+					<td style="vertical-align : middle;text-align:center;">可她的拒绝，真的让我心如死灰。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/sad_zh_voxcpm.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/sad_zh_cosyvoice2.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/sad_zh_indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;" rowspan="2">Surprised</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/surprised_en_prompt.wav"/></audio><br>A lady, is on Alice&#39;s lap!</td>
+					<td style="vertical-align : middle;text-align:center;">Goodness, it&#39;s the Queen of Hearts herself, and she looks anything but pleased!</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/surprised_en_voxcpm.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/surprised_en_cosyvoice2.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/surprised_en_indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/surprised_zh_prompt.wav"/></audio><br>真想不到，游泳竟有如此多的好处。</td>
+					<td style="vertical-align : middle;text-align:center;">天哪，它甚至能显著提升我们的记忆力和专注力！</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/surprised_zh_voxcpm.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/surprised_zh_cosyvoice2.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/emotion/surprised_zh_indextts2.wav"/></audio></td>
+				</tr>
+				
+			
+			</tbody>
+		</table>
+	</div>
+</div>
+
+
+
+<div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">
+	
+	<div class="text-center">
+		<h2 id="dialect-accent-voice-cloning" style="text-align: center;">Dialect &amp; Accent Voice Cloning</h2>
+		 
+	</div>
+	
+	
+	<div class="table-responsive pt-3">
+		<table class="table table-hover pt-2">
+			<thead>
+				<tr>
+					<th style="vertical-align : middle;text-align: center">Dialect</th><th style="vertical-align : middle;text-align: center">Prompt</th><th style="vertical-align : middle;text-align: center">Text</th><th style="vertical-align : middle;text-align: center">VoxCPM</th><th style="vertical-align : middle;text-align: center">CosyVoice2</th><th style="vertical-align : middle;text-align: center">Index-TTS</th>
+				</tr>
+			</thead>
+			<tbody>
+			
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;" rowspan="2">Chinese-Sichuan</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/prompt_wav/baoerjie.wav"/></audio><br>他们总说我瓜，其实我一点儿都不瓜，大多时候我都机智的一笔。</td>
+					<td style="vertical-align : middle;text-align:center;">叫啥子叫，之前不是说了吗，有姐罩着你呢。那个啥子，小师叔，打狗还要看主人呢，你要是再继续的话，我就是你的对手</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/voxcpm/baoerjie.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/cosyvoice2/baoerjie.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/indextts2/baoerjie.indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/prompt_wav/jialaolian.wav"/></audio><br>这天气是那么子搞的，我从来没见过这个天气。</td>
+					<td style="vertical-align : middle;text-align:center;">风车车，你不要跑，我来抓你来咯！你莫怪老子心狠手辣哈，哪个叫你娃儿不听话？抓住你，我就要把你做成耗儿肉！</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/voxcpm/jialaolian.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/cosyvoice2/jialaolian.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/indextts2/jialaolian.indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;" rowspan="1">Chinese-Henan</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/prompt_wav/henanhua.wav"/></audio><br>我感觉说河南话不影响我的颜值啊，我自己听不出来，恁感觉呢，恁感觉说河南话影响我的颜值吗？恁感觉呢姐妹们。</td>
+					<td style="vertical-align : middle;text-align:center;">一碗胡辣汤，配上俩油馍头，或者一笼肉包子，汤里边啥都有，肉丁、面筋、海带、豆皮儿，搅和在一起，黏糊糊的，喝一口，嘴里呼啦一下，带劲儿！可中！</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/voxcpm/henanhua.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/cosyvoice2/henanhua.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/indextts2/henanhua.indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;" rowspan="2">Chinese-Yue</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/prompt_wav/yueyu1.wav"/></audio><br>着西装打呔，攞大哥电话有咩用啊？啊？跟着这些大佬，吔屎啊你。</td>
+					<td style="vertical-align : middle;text-align:center;">你以为自己好威风啊？大佬一个电话，你就要跑得快过只狗；大佬一句话，你就好似隻鹌鹑咁，缩埋一旧。你哋呢班人，净系识得认大佬，唔识得做人。你哋唔係喺度搵食，你哋係喺度吔屎！我睇唔起你哋，真係睇唔起你哋！</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/voxcpm/yueyu1.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/cosyvoice2/yueyu1.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/indextts2/yueyu1.indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/prompt_wav/yueyu2.wav"/></audio><br>十室九贫凑得八两七钱六分五毫四厘由且三心两意一等下流。</td>
+					<td style="vertical-align : middle;text-align:center;">九流十家無一能，八仙過海七星聚，六親不認五更雞，四海為家三餐飽，兩手空空一場夢。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/voxcpm/yueyu2.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/cosyvoice2/yueyu2.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/indextts2/yueyu2.indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;" rowspan="1">Chinese-Guangxi</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/prompt_wav/guangxi1.wav"/></audio><br>算命先生说我24岁会黄袍加身，餐餐都有大鱼大肉为伴。我信你个鬼，你这个糟老头子坏的很。</td>
+					<td style="vertical-align : middle;text-align:center;">螺蛳粉对我们来说，不只是一碗粉那么简单，它承载着我们广西人独特的记忆。每当离家在外，最想念的就是这碗粉。它就像是家的味道，无论走到哪里，只要吃到一碗地道的螺蛳粉，就好像回到了家一样。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/voxcpm/guangxi1.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/cosyvoice2/guangxi1.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/indextts2/guangxi1.indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;" rowspan="1">Chinese-Tianjin</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/prompt_wav/tianjin.wav"/></audio><br>同学们有句老话叫老话说的好，吃面不吃蒜，等于没吃蒜，不听老人言，等于没听见。要想人不知，除非瞒得好，十年磨一剑，磨了整十年呢。</td>
+					<td style="vertical-align : middle;text-align:center;">哎呀，您这是上哪儿转悠去了，怎么这么晚才回来啊？家里人都等着急了，就差打你电话了。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/voxcpm/tianjin.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/cosyvoice2/tianjin.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/indextts2/tianjin.indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;" rowspan="1">English-India</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/prompt_wav/english_india.wav"/></audio><br>It&#39;s quite funny. You know, you&#39;re seeing just a picture, okay, I&#39;m gonna marry that guy or girl who is there in the picture.</td>
+					<td style="vertical-align : middle;text-align:center;">The only person you are destined to become is the person you decide to be. Don&#39;t let the fear of striking out keep you from playing the game. It is our choices, Harry, that show what we truly are, far more than our abilities. The best way to predict your future is to create it.</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/voxcpm/english_india.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/cosyvoice2/english_india.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/indextts2/english_india.indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;" rowspan="2">English-London</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/prompt_wav/english_en.wav"/></audio><br>I don&#39;t think I really do know much about jobs except the one I had during the war, and that certainly did not involve any traveling.</td>
+					<td style="vertical-align : middle;text-align:center;">How often have I said to you that when you have eliminated the impossible, whatever remains, however improbable, must be the truth?</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/voxcpm/english_en.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/cosyvoice2/english_en.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/dialect_zeroshot/indextts2/english_en.indextts2.wav"/></audio></td>
+				</tr>
+				
+			
+			</tbody>
+		</table>
+	</div>
+</div>
+
+
+
+<div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">
+	
+	<div class="text-center">
+		<h2 id="voice-and-recording-condition-cloning" style="text-align: center;">Voice and Recording Condition Cloning</h2>
+		 
+	</div>
+	
+	
+	<div class="table-responsive pt-3">
+		<table class="table table-hover pt-2">
+			<thead>
+				<tr>
+					<th style="vertical-align : middle;text-align: center">Prompt</th><th style="vertical-align : middle;text-align: center">Text</th><th style="vertical-align : middle;text-align: center">VoxCPM</th><th style="vertical-align : middle;text-align: center">CosyVoice2</th><th style="vertical-align : middle;text-align: center">Index-TTS</th>
+				</tr>
+			</thead>
+			<tbody>
+			
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;" rowspan="">
+						<audio controls="controls" style="width: 190px;"><source src="./audio/env/prompt_wav/sample_id_1932.wav"/></audio><br>播放儿童歌曲。
+					</td>
+					
+					<td style="vertical-align : middle;text-align:center;">让欢快的旋律充满整个房间。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/env/voxcpm/sample_id_1932.voxcpm.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/env/wangxiyang_cv2/sample_id_1932.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/env/indextts2/sample_id_1932.indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;" rowspan="">
+						<audio controls="controls" style="width: 190px;"><source src="./audio/env/prompt_wav/sample_id_3758.wav"/></audio><br>这就是最后一次假期里发生的事。
+					</td>
+					
+					<td style="vertical-align : middle;text-align:center;">谁又能想到，这场轻松的度假竟是一场巨大风暴的开端。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/env/voxcpm/sample_id_3758.voxcpm.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/env/wangxiyang_cv2/sample_id_3758.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/env/indextts2/sample_id_3758.indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;" rowspan="">
+						<audio controls="controls" style="width: 190px;"><source src="./audio/env/prompt_wav/sample_id_5768.wav"/></audio><br>比如在运转班组这一级，每班都会有人专门监控检测系统。
+					</td>
+					
+					<td style="vertical-align : middle;text-align:center;">从而能够第一时间发现异常并及时处置，保障生产线的稳定运行。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/env/voxcpm/sample_id_5768.voxcpm.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/env/wangxiyang_cv2/sample_id_5768.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/env/indextts2/sample_id_5768.indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;" rowspan="">
+						<audio controls="controls" style="width: 190px;"><source src="./audio/env/prompt_wav/sample_id_6638.wav"/></audio><br>一怒之下，他打翻了老板，然后远逃他乡。
+					</td>
+					
+					<td style="vertical-align : middle;text-align:center;">生活不是等待风暴过去，而是要学会在雨中跳舞。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/env/voxcpm/sample_id_6638.voxcpm.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/env/wangxiyang_cv2/sample_id_6638.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/env/indextts2/sample_id_6638.indextts2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;" rowspan="">
+						<audio controls="controls" style="width: 190px;"><source src="./audio/env/prompt_wav/sample_id_9712.wav"/></audio><br>国外有关专家调查了300多名长寿者，认为勤于用脑可延缓衰老，而懒惰可使人早衰。
+					</td>
+					
+					<td style="vertical-align : middle;text-align:center;">夕阳把她的影子拉得很长，长到足以覆盖整个十七岁的夏天。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/env/voxcpm/sample_id_9712.voxcpm.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/env/wangxiyang_cv2/sample_id_9712.wav"/></audio></td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/env/indextts2/sample_id_9712.indextts2.wav"/></audio></td>
+				</tr>
+				
+			
+			</tbody>
+		</table>
+	</div>
+</div>
+
+
+
+<div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">
+	
+	<div class="text-center">
+		<h2 id="text-guided-speech-generation" style="text-align: center;">Text-Guided Speech Generation</h2>
+		 
+	</div>
+	
+	
+	<div class="table-responsive pt-3">
+		<table class="table table-hover pt-2">
+			<thead>
+				<tr>
+					<th style="vertical-align : middle;text-align: center">Type</th><th style="vertical-align : middle;text-align: center">Text</th><th style="vertical-align : middle;text-align: center">VoxCPM</th>
+				</tr>
+			</thead>
+			<tbody>
+			
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;width: 300px;">ZH: story-telling</td>
+					<td style="vertical-align : middle;text-align:center;">有这么一个人呐，一个字都不认识，连他自己的名字都不会写，他上京赶考去了。哎，到那儿还就中了，不但中了，而且升来升去呀，还入阁拜相，你说这不是瞎说吗？哪有这个事啊。当然现在是没有这个事，现在你不能替人民办事，人民也不选举你呀！我说这个事情啊，是明朝的这么一段事情。因为在那个社会啊，甭管你有才学没才学，有学问没学问，你有钱没有？有钱，就能做官，捐个官做。说有势力，也能做官。也没钱也没势力，碰上啦，用上这假势力，也能做官，什么叫“假势力”呀，它因为在那个社会呀，那些个做官的人，都怀着一肚子鬼胎，都是这个拍上欺下，疑神疑鬼，你害怕我，我害怕你，互相害怕，这里头就有矛盾啦。由打这个呢，造成很多可笑的事情。今天我说的这段就这么回事。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/textguided/voxcpm/audio_zh_1.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;width: 300px;">ZH: storybook</td>
+					<td style="vertical-align : middle;text-align:center;">在很久很久以前，有一个国王。他把他的国家治理的非常好，国家不大，但百姓们丰衣足食，安居乐业，十分幸福。国王有三位美丽可爱的小公主，三位小公主们从生下来就具有一种神奇的魔力，当她们哭泣的时候，落下的眼泪会化作一颗颗晶莹剔透的钻石，价值连城。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/textguided/voxcpm/audio_zh_2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;width: 300px;">ZH: weather-report</td>
+					<td style="vertical-align : middle;text-align:center;">近日，陕西多地遭遇高温天气。7月15日，全省有8个气象站最高气温突破历史极值，多地发布高温红色预警。16日，多地高温持续，西安、宝鸡、咸阳、渭南、汉中、安康等地达40℃以上。陕西省气象台预计，从17日开始，部分区域将出现分散性降雨，持续多日的高温晴热有望得到缓解。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/textguided/voxcpm/audio_zh_3.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;width: 300px;">ZH: a-share-market-news</td>
+					<td style="vertical-align : middle;text-align:center;">各位听众，下午好。这里是“财经快讯”。今日A股三大指数集体收涨，沪指上涨0.8%，重回3100点上方。半导体及人工智能板块表现强势，成交额突破万亿，市场情绪有所回暖。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/textguided/voxcpm/audio_zh_4.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;width: 300px;">ZH: documentary-narration</td>
+					<td style="vertical-align : middle;text-align:center;">长城，它不仅仅是一道宏伟的砖石防线。它蜿蜒于中国的崇山峻岭之间，见证了数个朝代的兴衰更迭，承载着一个民族坚韧不屈的灵魂与和平的渴望。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/textguided/voxcpm/audio_zh_5.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;width: 300px;">ZH: advertisement</td>
+					<td style="vertical-align : middle;text-align:center;">还在为孩子的计算能力发愁吗？“智慧数学”APP，采用AI智能互动教学，让学习像玩游戏一样有趣。现在下载，即刻领取新人专属学习大礼包！</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/textguided/voxcpm/audio_zh_6.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;width: 300px;">ZH: poetry</td>
+					<td style="vertical-align : middle;text-align:center;">君不见，黄河之水天上来，奔流到海不复回。君不见，高堂明镜悲白发，朝如青丝暮成雪。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/textguided/voxcpm/audio_zh_7.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;width: 300px;">ZH: game-narration</td>
+					<td style="vertical-align : middle;text-align:center;">欢迎来到“源世界”，勇敢的冒险者。在这片被魔法与钢铁撕裂的大陆上，你的每一个选择，都将谱写新的史诗。现在，拿起你的武器，命运的齿轮已经开始转动。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/textguided/voxcpm/audio_zh_8.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;width: 300px;">EN: scientific-explanation</td>
+					<td style="vertical-align : middle;text-align:center;">A black hole is a region of spacetime where gravity is so strong that nothing, not even light, can escape. The boundary of this region is called the event horizon. At the center of a black hole is a gravitational singularity, a point of infinite density.</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/textguided/voxcpm/audio_en_1.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;width: 300px;">EN: business-presentation</td>
+					<td style="vertical-align : middle;text-align:center;">Good morning, everyone. In the next 15 minutes, I&#39;ll be outlining our Q3 performance and presenting the strategic roadmap for our next fiscal year. Our key focus will be on market expansion and digital transformation.</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/textguided/voxcpm/audio_en_2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;width: 300px;">EN: casual-voicemail</td>
+					<td style="vertical-align : middle;text-align:center;">Hey Sarah, it&#39;s Alex. Just calling to see if you&#39;re still free for dinner on Friday night. I was thinking of that new Italian place downtown. Give me a call back when you get a chance. Hope you&#39;re having a great week!</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/textguided/voxcpm/audio_en_3.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;width: 300px;">EN: nature-documentary-narration</td>
+					<td style="vertical-align : middle;text-align:center;">Deep in the Amazon rainforest, the jaguar, a solitary and powerful predator, moves with silent grace. It is the apex hunter of this ecosystem, a masterpiece of evolution, perfectly adapted to its lush, green world.</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/textguided/voxcpm/audio_en_4.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;width: 300px;">EN: movie-dialogue-epic</td>
+					<td style="vertical-align : middle;text-align:center;">We&#39;ve traveled too far and sacrificed too much to turn back now. This is our last stand. Whatever happens here today, will be remembered for a thousand years. For glory!</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/textguided/voxcpm/audio_en_5.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;width: 300px;">EN: rap-lyrics</td>
+					<td style="vertical-align : middle;text-align:center;">Check the mic, one two, step into the light. Livin&#39; my story, writin&#39; rhymes through the night. From the bottom to the top, yeah, the grind don&#39;t stop. They see me climbin&#39;, gonna watch me as I pop. Yeah.</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/textguided/voxcpm/audio_en_6.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					<td style="vertical-align : middle;text-align:center;width: 300px;">EN: singing? - an interesting case</td>
+					<td style="vertical-align : middle;text-align:center;">In the silence of the dawn, I found my strength to carry on. Oh, this love, is a fire in my soul, and it&#39;s taking all control.</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/textguided/voxcpm/audio_en_8.wav"/></audio></td>
+				</tr>
+				
+			
+			</tbody>
+		</table>
+	</div>
+</div>
+
+
+
+<div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">
+	
+	<div class="text-center">
+		<h2 id="mathematical-symbol-awareness" style="text-align: center;">Mathematical Symbol Awareness</h2>
+		(Currently supports <b>Chinese</b> only) 
+	</div>
+	
+	
+	<div class="table-responsive pt-3">
+		<table class="table table-hover pt-2">
+			<thead>
+				<tr>
+					<th style="vertical-align : middle;text-align: center">Prompt</th><th style="vertical-align : middle;text-align: center">Text</th><th style="vertical-align : middle;text-align: center">VoxCPM</th>
+				</tr>
+			</thead>
+			<tbody>
+			
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;" rowspan="2">
+						<audio controls="controls" style="width: 190px;"><source src="./audio/math/prompt/prompt_wujing.wav"/></audio><br>坦克你没有后视镜的，枪炮是不长眼的，还有黑哥们儿的语言是不通的。
+					</td>
+					
+					<td style="vertical-align : middle;text-align:center;">设l，m，n为不同的直线，α，β为不同的平面，有如下四个命题：①若α⊥β，l⊥α，则l∥β。②若α⊥β，l⊂α，则l⊥β。③若l⊥m，m⊥n，则 l∥n。④若m⊥α，n∥β且α∥β，则m⊥n。其中正确命题的个数是</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/math/wujing/wujing_math.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;">设f(x)为定义于(-∞，&#43;∞)上的偶函数，且f(x)在[0，&#43;∞)上为增函数，则f(-2)、f(-π)、f(3)的大小顺序是</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/math/wujing/wujing_math2.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;" rowspan="2">
+						<audio controls="controls" style="width: 190px;"><source src="./audio/math/prompt/prompt_meiyangyang.wav"/></audio><br>沸羊羊，你吃东西能不能斯文一点啊？
+					</td>
+					
+					<td style="vertical-align : middle;text-align:center;">沸羊羊，如果 △ABC∽△DEF，且AB:DE=1:2，那我问你，△ABC的面积与△DEF的面积之比是多少？</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/math/meiyangyang/meiyangyang_math.wav"/></audio></td>
+				</tr>
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;">沸羊羊，我再问你，把-495°表示成 k×360°&#43;θ 的形式，其中 k 是整数，则θ可以是多少？</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/math/meiyangyang/meiyangyang_math2.wav"/></audio></td>
+				</tr>
+				
+			
+			</tbody>
+		</table>
+	</div>
+</div>
+
+
+
+<div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">
+	
+	<div class="text-center">
+		<h2 id="phoneme-control-support" style="text-align: center;">Phoneme Control Support</h2>
+		 
+	</div>
+	
+	
+	<div class="table-responsive pt-3">
+		<table class="table table-hover pt-2">
+			<thead>
+				<tr>
+					<th style="vertical-align : middle;text-align: center">Prompt</th><th style="vertical-align : middle;text-align: center">Without Phoneme</th><th style="vertical-align : middle;text-align: center">With Phoneme</th>
+				</tr>
+			</thead>
+			<tbody>
+			
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;" rowspan="">
+						<audio controls="controls" style="width: 190px;"><source src="./audio/phoneme/prompt/prompt.wav"/></audio><br>Just by listening a few minutes a day, you&#39;ll be able to eliminate negative thoughts by conditioning your mind to be more positive.
+					</td>
+					
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/phoneme/result/result_wo_phoneme.wav"/></audio><br>The patient was diagnosed with pneumonoultramicroscopicsilicovolcanoconiosis.</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/phoneme/result/result_w_phoneme.wav"/></audio><br>The patient was diagnosed with {N UW2 M AH0 N OW0 UH1 L T R AH0 M AY2 K R AH0 S K AA1 P IH0 K S IH0 L AH0 K OW2 V AA2 L K AE1 N OW2 K OW2 N IY0 OW0 S IH0 S}</td>
+				</tr>
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;" rowspan="2">
+						<audio controls="controls" style="width: 190px;"><source src="./audio/phoneme/prompt/prompt_cai.wav"/></audio><br>你干嘛哎哟。
+					</td>
+					
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/phoneme/result/result_wo_phoneme_cai.wav"/></audio><br>香精煎鱼食不食？</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/phoneme/result/result_w_phoneme_cai.wav"/></audio><br>{xiang3} {jin4} {jian1} {yu4} {shi4} {bu2} {shi4}。</td>
+				</tr>
+				
+				<tr>
+					
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/phoneme/result/result_wo_phoneme_cai1.wav"/></audio><br>我一边看书一边看门，发现有个人在我家门口东躲西藏。</td>
+					<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="./audio/phoneme/result/result_w_phoneme_cai1.wav"/></audio><br>我一边看书一边{kan1}门，发现有个人在我家门口东躲西{zang4}。</td>
+				</tr>
+				
+			
+			</tbody>
+		</table>
+	</div>
+</div>
+
+
+
+<div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">
+	<h2 style="text-align: center;">Disclaimer</h2>
+	<p>The content provided above is for academic purposes only and is intended to demonstrate technical capabilities. Some examples are sourced from the internet. If any content infringes on your rights, please contact us to request its removal.</p>
+</div>
+
+</article>
+</main>
+</div>
+</body>
+
+</script>
+</html>
